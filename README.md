@@ -37,6 +37,7 @@ Docker ใช้ multi-stage build: stage แรกติดตั้ง depende
 ## วิธีรันส่วนที่ 3 ด้วย Node.js
 
 ```bash
+cd section-3
 npm install
 npm run dev
 ```
@@ -58,6 +59,31 @@ npm run dev
 - Admin เปลี่ยนได้ทั้ง `To Do → Done` และ `Done → To Do`
 - Employee เปลี่ยนได้เฉพาะ task ของตนเองจาก `To Do → Done`
 
+## สรุป Database Schema
+
+ไฟล์ [section-2/schema.sql](section-2/schema.sql) ออกแบบสำหรับ PostgreSQL โดยแยกข้อมูลหลักเป็น 4 ตาราง:
+
+| ตาราง | หน้าที่ | ความสัมพันธ์สำคัญ |
+|---|---|---|
+| `users` | เก็บบัญชีผู้ใช้ ชื่อที่แสดง และ role | `username` ไม่ซ้ำ และ `role` รับเฉพาะ `admin` หรือ `employee` |
+| `projects` | เก็บข้อมูลโครงการและผู้สร้าง | `created_by` อ้างอิง `users.id` |
+| `tasks` | เก็บงาน ชื่อโครงการ ผู้รับผิดชอบ และสถานะ | `project_id` อ้างอิง `projects.id`, `assigned_to` และ `created_by` อ้างอิง `users.id` |
+| `audit_log` | เก็บประวัติการเปลี่ยนสถานะ task | `task_id` และ `user_id` อ้างอิงตารางที่เกี่ยวข้อง |
+
+ข้อกำหนดข้อมูลที่สำคัญ:
+
+- ทุกตารางใช้ `BIGSERIAL` เป็น primary key
+- Foreign key ใช้ `ON DELETE CASCADE` กับ task เมื่อ project ถูกลบ และใช้ `ON DELETE RESTRICT` กับผู้ใช้เพื่อป้องกันการลบ user ที่ยังมีข้อมูลอ้างอิง
+- `tasks.status` รับเฉพาะ `To Do` และ `Done` โดยค่าเริ่มต้นคือ `To Do`
+- ชื่อ task ห้ามเป็นค่าว่างด้วย `tasks_title_not_blank`
+- ทุกการเปลี่ยนสถานะควรเพิ่มรายการใหม่ใน `audit_log` ภายใน transaction เดียวกัน
+
+Indexes:
+
+- `idx_tasks_assigned_status (assigned_to, status)` รองรับหน้า Employee ที่ค้นหา task ของผู้ใช้และกรองตามสถานะ
+- `idx_tasks_project (project_id)` รองรับการแสดง task ทั้งหมดของ project
+- `idx_audit_log_task_created (task_id, created_at DESC)` รองรับการดูประวัติของ task โดยเรียงรายการล่าสุดก่อน
+
 ## โครงสร้าง
 
 - `section-1/`: flowchart และ decision log
@@ -65,6 +91,28 @@ npm run dev
 - `section-3/`: source ของเว็บแอป
 - `section-4/`: โค้ดที่แก้และตาราง debugging/code review
 - `Dockerfile`, `docker-compose.yml`, `docker/nginx.conf`: ไฟล์สำหรับ build และรันด้วย Docker
+
+## วิธีอัปเดตไฟล์ขึ้น GitHub
+
+ถ้ายังไม่มี repository local ให้ clone ครั้งแรกจากโฟลเดอร์ `Downloads`:
+
+```powershell
+cd C:\Users\ADMINS\Downloads
+git clone https://github.com/6631502051-ops/intern-test-project.git
+cd intern-test-project
+```
+
+ถ้า clone repository ไว้แล้ว ให้เข้าโฟลเดอร์นั้นและใช้คำสั่งต่อไปนี้ โดยไม่ต้อง `git clone` ซ้ำ:
+
+```powershell
+cd C:\Users\ADMINS\Downloads\intern-test-project
+git status
+git add .
+git commit -m "Describe what changed"
+git push origin main
+```
+
+หลัง `git push` ระบบอาจให้ login GitHub หรือใช้ Personal Access Token แทน password
 
 ## ตรวจสอบ
 
@@ -78,15 +126,3 @@ npm run build
 docker compose config
 docker compose build
 ```
-
-## สรุป Database Schema
-
-ไฟล์ `section-2/schema.sql` ออกแบบสำหรับ PostgreSQL โดยมี 4 ตารางหลัก: `users` เก็บบัญชีและ role, `projects` เก็บโครงการ, `tasks` เก็บงานและผู้รับผิดชอบ, และ `audit_log` เก็บประวัติการเปลี่ยนสถานะ
-
-ข้อกำหนดสำคัญ: ทุกตารางมี primary key แบบ `BIGSERIAL`; มี foreign key เชื่อม users, projects และ tasks; role รับเฉพาะ `admin` หรือ `employee`; status รับเฉพาะ `To Do` หรือ `Done`; ชื่อ task ห้ามว่าง; และการเปลี่ยนสถานะควรบันทึก audit log ใน transaction เดียวกัน
-
-Indexes ที่สร้างขึ้น:
-
-- `idx_tasks_assigned_status (assigned_to, status)` รองรับการค้นหา task ของ Employee และกรองสถานะ
-- `idx_tasks_project (project_id)` รองรับการแสดง task ของ project
-- `idx_audit_log_task_created (task_id, created_at DESC)` รองรับประวัติ task โดยเรียงรายการล่าสุดก่อน
