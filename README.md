@@ -78,3 +78,15 @@ npm run build
 docker compose config
 docker compose build
 ```
+
+## สรุป Database Schema
+
+ไฟล์ `section-2/schema.sql` ออกแบบสำหรับ PostgreSQL โดยมี 4 ตารางหลัก: `users` เก็บบัญชีและ role, `projects` เก็บโครงการ, `tasks` เก็บงานและผู้รับผิดชอบ, และ `audit_log` เก็บประวัติการเปลี่ยนสถานะ
+
+ข้อกำหนดสำคัญ: ทุกตารางมี primary key แบบ `BIGSERIAL`; มี foreign key เชื่อม users, projects และ tasks; role รับเฉพาะ `admin` หรือ `employee`; status รับเฉพาะ `To Do` หรือ `Done`; ชื่อ task ห้ามว่าง; และการเปลี่ยนสถานะควรบันทึก audit log ใน transaction เดียวกัน
+
+Indexes ที่สร้างขึ้น:
+
+- `idx_tasks_assigned_status (assigned_to, status)` รองรับการค้นหา task ของ Employee และกรองสถานะ
+- `idx_tasks_project (project_id)` รองรับการแสดง task ของ project
+- `idx_audit_log_task_created (task_id, created_at DESC)` รองรับประวัติ task โดยเรียงรายการล่าสุดก่อน
