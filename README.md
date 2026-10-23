@@ -92,28 +92,6 @@ Indexes:
 - `section-4/`: โค้ดที่แก้และตาราง debugging/code review
 - `Dockerfile`, `docker-compose.yml`, `docker/nginx.conf`: ไฟล์สำหรับ build และรันด้วย Docker
 
-## วิธีอัปเดตไฟล์ขึ้น GitHub
-
-ถ้ายังไม่มี repository local ให้ clone ครั้งแรกจากโฟลเดอร์ `Downloads`:
-
-```powershell
-cd C:\Users\ADMINS\Downloads
-git clone https://github.com/6631502051-ops/intern-test-project.git
-cd intern-test-project
-```
-
-ถ้า clone repository ไว้แล้ว ให้เข้าโฟลเดอร์นั้นและใช้คำสั่งต่อไปนี้ โดยไม่ต้อง `git clone` ซ้ำ:
-
-```powershell
-cd C:\Users\ADMINS\Downloads\intern-test-project
-git status
-git add .
-git commit -m "Describe what changed"
-git push origin main
-```
-
-หลัง `git push` ระบบอาจให้ login GitHub หรือใช้ Personal Access Token แทน password
-
 ## ตรวจสอบ
 
 ```bash
